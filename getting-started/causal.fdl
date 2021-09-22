@@ -1,0 +1,13 @@
+feature Hello {
+    args {
+        token: String!
+    }
+    
+    output {
+        greeting: String! = "Hello, World!"
+    }
+
+    event rating {
+        stars: Int! 
+    }
+}
