@@ -3,20 +3,21 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "NODE_OPTIONS='--inspect' next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "fdlgen": "npx causalc --typescript causal.tsx causal.fdl"
   },
   "dependencies": {
-    "@causal/compiler": "^0.2.0-pre202109221906",
+    "@causal/compiler": "^0.2.0-pre202109231133",
     "next": "11.1.2",
-    "node-fetch": "^3.0.0",
+    "node-fetch": "^2.6.1",
     "react": "17.0.2",
     "react-dom": "17.0.2"
   },
   "devDependencies": {
+    "@types/node-fetch": "^2.5.12",
     "@types/react": "17.0.24",
     "eslint": "7.32.0",
     "eslint-config-next": "11.1.2",

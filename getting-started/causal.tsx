@@ -74,7 +74,9 @@ export class Hello implements Hello_outputs {
 
 }
 
-type SessionArgs = { deviceId: string; };
+type SessionArgs = {
+   deviceId: string;
+};
 
 class Impression {
    readonly deviceId: string;
