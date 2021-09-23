@@ -10,7 +10,7 @@
     "fdlgen": "npx causalc --typescript causal.tsx causal.fdl"
   },
   "dependencies": {
-    "@causal/compiler": "^0.2.0-pre202109231133",
+    "@causal/compiler": "^0.2.0-pre202109231620",
     "next": "11.1.2",
     "node-fetch": "^2.6.1",
     "react": "17.0.2",
