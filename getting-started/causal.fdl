@@ -1,12 +1,20 @@
-feature Hello {
+
+"""
+Wraps a rating box that we can put on various product pages
+to collect ratings from our users
+"""
+feature RatingBox {
     args {
-        token: String!
+        "The product that we are collecting ratings for"
+        product: String!
     }
     
     output {
-        greeting: String! = "Hello, World!"
+        "The text next to the stars that prompts the visitor to rate the product"
+        call_to_action: String! = "Rate this product!"
     }
 
+    "Occurs each time a rating is collected"
     event rating {
         stars: Int! 
     }

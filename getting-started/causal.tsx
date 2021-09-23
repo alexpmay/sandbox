@@ -13,42 +13,44 @@ import React, {
 // Start Parameterized
 ///////////////////////////////////////////////////////////////////////////////
 
-/** 
+/** Wraps a rating box that we can put on various product pages
+to collect ratings from our users
  *   */
-interface Hello_outputs {
-    readonly greeting: string;
+interface RatingBox_outputs {
+    readonly call_to_action: string;
 
     readonly _impressionId: string;
 }
 
-/** 
+/** Wraps a rating box that we can put on various product pages
+to collect ratings from our users
  *   */
-export class Hello implements Hello_outputs {
-    /** 
+export class RatingBox implements RatingBox_outputs {
+    /** The product that we are collecting ratings for
      *  Default: null
      *   */
-    readonly token: string;
-    /** 
-     *  Control: "Hello, World!"
+    readonly product: string;
+    /** The text next to the stars that prompts the visitor to rate the product
+     *  Control: "Rate this product!"
      *   */
-    readonly greeting: string;
+    readonly call_to_action: string;
     readonly impression: Impression;
     readonly _impressionId: string;
 
-    /**    
+    /** Occurs each time a rating is collected   
     *  */
     signalrating( { stars } 
         : {  stars : number  } ) : void
     {
-      Hello.signalrating( this.impression.deviceId, this._impressionId, { stars: stars, } );
+      RatingBox.signalrating( this.impression.deviceId, this._impressionId, { stars: stars, } );
     }
-    /**    
+    /** Occurs each time a rating is collected   
       *  */
     static signalrating( deviceId : string, impressionId : string,  { stars } 
         : {  stars : number  } ) : void
     {
         const data = { 
-          feature: "Hello",
+          feature: "RatingBox",
           event: "rating",
           impressionId: impressionId,
           deviceId: deviceId,
@@ -60,15 +62,15 @@ export class Hello implements Hello_outputs {
 
    private constructor( 
        impression: Impression, 
-       args: NonNullable<FeatureQuery["Hello"]>, 
-       outputs: Hello_outputs ) {
+       args: NonNullable<FeatureQuery["RatingBox"]>, 
+       outputs: RatingBox_outputs ) {
       this.impression = impression;
       this._impressionId = outputs._impressionId;
-      this.token = args.token;
-      if (outputs.greeting != undefined) {
-          this.greeting = outputs.greeting;
+      this.product = args.product;
+      if (outputs.call_to_action != undefined) {
+          this.call_to_action = outputs.call_to_action;
       } else {
-          this.greeting = "Hello, World!";
+          this.call_to_action = "Rate this product!";
       }
    }
 
@@ -102,16 +104,17 @@ class Impression {
       );
     }
   }
-   Hello?: Hello 
+   RatingBox?: RatingBox 
 
 }
 
 export type QueryExact<T extends FeatureNames> = 
-    /** 
+    /** Wraps a rating box that we can put on various product pages
+to collect ratings from our users
      *  */
-    & ("Hello" extends T ?   
-      { Hello : 
-          {  token : string  } } : unknown ) 
+    & ("RatingBox" extends T ?   
+      { RatingBox : 
+          {  product : string  } } : unknown ) 
 
 
 export function queryExact<T extends FeatureNames>(
@@ -119,18 +122,19 @@ export function queryExact<T extends FeatureNames>(
 ): Query<T> {
   const queryBuilder = new Query<T>();
   const _args = args as unknown as QueryExact<FeatureNames>; // cast needed for older versions of typescript
-  if (_args.Hello !== undefined)
-    queryBuilder.getHello(_args.Hello);
+  if (_args.RatingBox !== undefined)
+    queryBuilder.getRatingBox(_args.RatingBox);
   return queryBuilder;
 }
 
 export class Query<T extends FeatureNames>{
-    /** 
+    /** Wraps a rating box that we can put on various product pages
+to collect ratings from our users
      *  */
-    getHello( { token } 
-      : {  token : string  } )
-        : Query<T | "Hello"> {
-        this.queries['Hello'] = { token: token, }
+    getRatingBox( { product } 
+      : {  product : string  } )
+        : Query<T | "RatingBox"> {
+        this.queries['RatingBox'] = { product: product, }
         return this
     }
 
@@ -138,29 +142,29 @@ export class Query<T extends FeatureNames>{
 }
 
 interface FeatureQuery {
-    Hello?: { 
-      token: string
+    RatingBox?: { 
+      product: string
        },
 };
 
 interface FeatureResponse {
-    Hello?: Hello_outputs;
+    RatingBox?: RatingBox_outputs;
 };
 
 type FeatureNames = 
-    |"Hello"
+    |"RatingBox"
     ;
  
 
 var featureClasses = {
-    Hello,
+    RatingBox,
     };
 
 type ToData<T extends FeatureNames> =
-    & ("Hello" extends T ? { Hello?:FeatureResponse["Hello"] } : unknown)
+    & ("RatingBox" extends T ? { RatingBox?:FeatureResponse["RatingBox"] } : unknown)
 
 type ToImpression<T extends FeatureNames> =
-    & ("Hello" extends T ? { Hello?:Hello } : unknown)
+    & ("RatingBox" extends T ? { RatingBox?:RatingBox } : unknown)
     & SessionArgs
     & {
     }

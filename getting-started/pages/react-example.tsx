@@ -20,7 +20,7 @@ export default function App() {
 }
 
 function ReactExample() {
-  const query = queryBuilder().getHello({ token: "example string" });
+  const query = queryBuilder().getRatingBox({ product: "iPhone 13" });
 
   const { data, loading, error } = useCausal(query, {
     deviceId: "abc123",
@@ -34,5 +34,5 @@ function ReactExample() {
   //   return <div>Error...</div>;
   // }
 
-  return <div>{data.Hello?.greeting}</div>;
+  return <div>{data.RatingBox?.call_to_action}</div>;
 }
