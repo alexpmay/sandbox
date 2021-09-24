@@ -8,4 +8,4 @@
  */
 
 rootProject.name = 'getting-started-java'
-include('app')
+

@@ -14,14 +14,40 @@ plugins {
 repositories {
     // Use JCenter for resolving dependencies.
     jcenter()
+    maven {
+      url 'https://causal-530459586293.d.codeartifact.us-east-2.amazonaws.com/maven/causal/'
+        credentials {
+            username "aws"
+            password System.env.CODEARTIFACT_AUTH_TOKEN
+        }
+    }
 }
 
 dependencies {
     // This dependency is used by the application.
     implementation 'com.google.guava:guava:29.0-jre'
+    implementation 'io.causallabs:causal-runtime:0.2-SNAPSHOT'
+}
+
+task generateSource(type: Exec) {
+    workingDir '.' 
+    commandLine 'causalc' , '--java' , 'build/generated' , 'causal.fdl' 
+}
+compileJava.dependsOn(generateSource)
+
+sourceSets {
+    main {
+        java {
+            srcDirs 'build/generated'
+        }
+    }
 }
 
 application {
     // Define the main class for the application.
     mainClass = 'io.causallabs.gettingstarted.App'
+}
+
+run {
+    args = [' --port' , ' 8080' , ' --listen' , ' laptop' , ' --fdl' , ' regression/causal.fdl' ]
 }
