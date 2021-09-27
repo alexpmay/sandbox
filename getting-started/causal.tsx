@@ -12,72 +12,72 @@ import React, {
 // Start Parameterized
 ///////////////////////////////////////////////////////////////////////////////
 
+
 /** Wraps a rating box that we can put on various product pages
 to collect ratings from our users
  *   */
 interface RatingBox_outputs {
-  readonly call_to_action: string;
+    readonly call_to_action: string;
 
-  readonly _impressionId: string;
+    readonly _impressionId: string;
 }
 
 /** Wraps a rating box that we can put on various product pages
 to collect ratings from our users
  *   */
 export class RatingBox implements RatingBox_outputs {
-  /** The product that we are collecting ratings for
-   *  Default: null
-   *   */
-  readonly product: string;
-  /** The text next to the stars that prompts the visitor to rate the product
-   *  Control: "Rate this product!"
-   *   */
-  readonly call_to_action: string;
-  readonly impression: ImpressionImpl;
-  readonly _impressionId: string;
+    /** The product that we are collecting ratings for
+     *  Default: null
+     *   */
+    readonly product: string;
+    /** The text next to the stars that prompts the visitor to rate the product
+     *  Control: "Rate this product!"
+     *   */
+    readonly call_to_action: string;
+    readonly impression: ImpressionImpl;
+    readonly _impressionId: string;
 
-  /** Occurs each time a rating is collected
-   *  */
-  signalrating({ stars }: { stars: number }): void {
-    RatingBox.signalrating(this.impression.deviceId, this._impressionId, {
-      stars: stars,
-    });
-  }
-  /** Occurs each time a rating is collected
-   *  */
-  static signalrating(
-    deviceId: string,
-    impressionId: string,
-    { stars }: { stars: number }
-  ): void {
-    const data = {
-      feature: "RatingBox",
-      event: "rating",
-      impressionId: impressionId,
-      deviceId: deviceId,
-      args: { stars: stars },
-    };
-    _sendBeacon(data);
-  }
-
-  private constructor(
-    impression: ImpressionImpl,
-    args: NonNullable<FeatureQuery["RatingBox"]>,
-    outputs: RatingBox_outputs
-  ) {
-    this.impression = impression;
-    this._impressionId = outputs._impressionId;
-    this.product = args.product;
-    if (outputs.call_to_action != undefined) {
-      this.call_to_action = outputs.call_to_action;
-    } else {
-      this.call_to_action = "Rate this product!";
+    /** Occurs each time a rating is collected   
+    *  */
+    signalrating( { stars } 
+        : {  stars : number  } ) : void
+    {
+      RatingBox.signalrating( this.impression.deviceId, this._impressionId, { stars: stars, } );
     }
-  }
+    /** Occurs each time a rating is collected   
+      *  */
+    static signalrating( deviceId : string, impressionId : string,  { stars } 
+        : {  stars : number  } ) : void
+    {
+        const data = { 
+          feature: "RatingBox",
+          event: "rating",
+          impressionId: impressionId,
+          deviceId: deviceId,
+          args: {  stars: stars  }
+        };
+      _sendBeacon(data);
+    }
+
+
+   private constructor( 
+       impression: ImpressionImpl, 
+       args: NonNullable<FeatureQuery["RatingBox"]>, 
+       outputs: RatingBox_outputs ) {
+      this.impression = impression;
+      this._impressionId = outputs._impressionId;
+      this.product = args.product;
+      if (outputs.call_to_action != undefined) {
+          this.call_to_action = outputs.call_to_action;
+      } else {
+          this.call_to_action = "Rate this product!";
+      }
+   }
+
 }
 
 type SessionArgs = {
-  deviceId: string;
+   deviceId: string;
 };
 
 class ImpressionImpl implements Impression<FeatureNames> {
@@ -105,66 +105,73 @@ class ImpressionImpl implements Impression<FeatureNames> {
       );
     }
   }
-  RatingBox?: RatingBox;
+   RatingBox?: RatingBox 
+
 }
 
-export type QueryArgs<T extends FeatureNames> =
-  /** Wraps a rating box that we can put on various product pages
+export type QueryArgs<T extends FeatureNames> = 
+    /** Wraps a rating box that we can put on various product pages
 to collect ratings from our users
      *  */
-  "RatingBox" extends T ? { RatingBox: { product: string } } : unknown;
+    & ("RatingBox" extends T ?   
+      { RatingBox : 
+          {  product : string  } } : unknown ) 
+
 
 export function createQuery<T extends FeatureNames>(
   args: QueryArgs<T>
 ): QueryBuilder<T> {
   const queryBuilder = new QueryBuilder<T>();
   const _args = args as unknown as QueryArgs<FeatureNames>; // cast needed for older versions of typescript
-  if (_args.RatingBox !== undefined) queryBuilder.getRatingBox(_args.RatingBox);
+  if (_args.RatingBox !== undefined)
+    queryBuilder.getRatingBox(_args.RatingBox);
   return queryBuilder;
 }
 
-export class QueryBuilder<T extends FeatureNames> {
-  /** Wraps a rating box that we can put on various product pages
+export class QueryBuilder<T extends FeatureNames>{
+    /** Wraps a rating box that we can put on various product pages
 to collect ratings from our users
      *  */
-  getRatingBox({
-    product,
-  }: {
-    product: string;
-  }): QueryBuilder<T | "RatingBox"> {
-    this.queries["RatingBox"] = { product: product };
-    return this;
-  }
+    getRatingBox( { product } 
+      : {  product : string  } )
+        : QueryBuilder<T | "RatingBox"> {
+        this.queries['RatingBox'] = { product: product, }
+        return this
+    }
 
-  queries: FeatureQuery = {};
+    queries: FeatureQuery = {};
 }
 
 interface FeatureQuery {
-  RatingBox?: {
-    product: string;
-  };
-}
-
-interface FeatureOutputs {
-  RatingBox?: RatingBox_outputs;
-}
-
-type FeatureNames = "RatingBox";
-
-export var allFeatures = {
-  RatingBox,
+    RatingBox?: { 
+      product: string
+       },
 };
 
-type Outputs<T extends FeatureNames> = "RatingBox" extends T
-  ? { RatingBox?: FeatureOutputs["RatingBox"] }
-  : unknown;
+interface FeatureOutputs {
+    RatingBox?: RatingBox_outputs;
+};
 
-type Impression<T extends FeatureNames> = ("RatingBox" extends T
-  ? { RatingBox?: RatingBox }
-  : unknown) &
-  SessionArgs & { toJSON(): ImpressionJSON<T> } & {};
+type FeatureNames = 
+    |"RatingBox"
+    ;
+ 
 
-let _baseUrl = "http://local.test:3004/iserver";
+export var allFeatures = {
+    RatingBox,
+    };
+
+type Outputs<T extends FeatureNames> =
+    & ("RatingBox" extends T ? { RatingBox?:FeatureOutputs["RatingBox"] } : unknown)
+
+type Impression<T extends FeatureNames> =
+    & ("RatingBox" extends T ? { RatingBox?:RatingBox } : unknown)
+    & SessionArgs 
+    & { toJSON(): ImpressionJSON<T> }
+    & {
+    }
+
+let _baseUrl = "http://local.test:3004/iserver"
 
 ///////////////////////////////////////////////////////////////////////////////
 // End Parameterized
@@ -382,7 +389,7 @@ export function toImpression<T extends FeatureNames>({
     requests,
     outputs: outputs as FeatureOutputs,
   });
-  return impression;
+  return impression as unknown as Impression<T>; // cast needed for older version of typescript
 }
 
 export type CausalClientOptions = {
@@ -447,7 +454,9 @@ export class CausalClient {
         "device id was null, undefined or the empty string. Generating random id"
       );
 
-    this.deviceId = _deviceId ? _deviceId : "gen_" + generateId();
+    this.deviceId = _deviceId
+      ? _deviceId
+      : "gen_" + generateId();
 
     if (_cache && _cacheDurationSeconds === 0)
       _onWarn("Cache set, but cacheDuration is 0. Not caching");
@@ -600,7 +609,7 @@ export class CausalClient {
           requests: builder.queries,
           outputs,
         });
-        return { impression: impression as unknown as Impression<T>, error };
+        return { impression: impression as unknown as Impression<T>, error }; // cast needed for older versions of typescript
       }
       const response: FeatureOutputs = (await result.json()) as FeatureOutputs;
       outputs = response;
@@ -618,7 +627,7 @@ export class CausalClient {
       }
     }
 
-    const data = new ImpressionImpl({
+    const impression = new ImpressionImpl({
       args: sessionArgs,
       requests: builder.queries,
       outputs,
@@ -636,7 +645,7 @@ export class CausalClient {
         impressions,
       });
     }
-    return { impression: data };
+    return { impression: impression as unknown as Impression<T> }; // cast needed for older versions of typescript
   }
 }
 
@@ -687,7 +696,7 @@ export function useImpression<T extends FeatureNames>(
       args: { deviceId: client?.deviceId ?? "error_noClientId" },
       requests: builder.queries,
       outputs: {},
-    }) as Impression<T> // cast only needed for older versions of typescript
+    }) as unknown as Impression<T> // cast only needed for older versions of typescript
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<
@@ -767,7 +776,7 @@ export function useImpression<T extends FeatureNames>(
   return { data: data as Impression<T>, loading, error };
 }
 
-export function generateId(): string {
+export function generateId() {
   return (
     (Math.random() + 1).toString(36).substring(2) +
     (Math.random() + 1).toString(36).substring(2)
