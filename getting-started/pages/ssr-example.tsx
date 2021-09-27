@@ -45,34 +45,35 @@ export const getServerSideProps: GetServerSideProps<SSRProps> = async (
 
   // Next.js requires that SSR props be serializable as JSON
   // So we have to convert the impression to JSON, and convert it back when
-  // we render. More on this ina moment
+  // we render.
   const props: SSRProps = { product, json: impression.toJSON() };
   return { props };
 };
 
-// createQuery vs queryBuilder()
+// createQuery() vs queryBuilder()
 //
 // When using queryBuilder(), the type of the query and the feature arguments
 // are built at the same time
 //
-// Sometime we need to define the type first, and then use it later to both
-// creaet a query and also to pass data around.
+// Sometimes we need to define the type first, and then use it later to both
+// create a query and also to pass data around.
 //
-// For this use case, SelectFeatures defines the type and createQuery create
-// the query
+// For this use case, SelectFeatures defines the type and createQuery
+// (used in gerServerSideProps) create the query
 //
-// SelectFeatures takes in feature names as a generic parameter
+// SelectFeatures takes in the feature names to use as a generic parameter
 // i.e:  "Feature1" | "Feature2" | "Feature3"
 //
 // In VSCode, Use a double quote (") to trigger automplete within this <>
 type RatingFeatures = SelectFeatures<"RatingBox">;
 
 // SSRprops defines type of the props being passed from getServerSideProps to
-// the page (the name doesnt have to be SSRProps, it could be anything)
+// the page (the name doesn't have to be SSRProps, it could be anything)
 type SSRProps = {
   product: typeof products[keyof typeof products];
 
   // ImpressionJSON is the JSON serializable version of an impression
+  // Just like createQuery(), it uses the type we defined using SelectFeatures
   json: ImpressionJSON<RatingFeatures>;
 };
 
