@@ -8,8 +8,6 @@ import React, {
   useState,
 } from "react";
 
-// test
-
 ///////////////////////////////////////////////////////////////////////////////
 // Start Parameterized
 ///////////////////////////////////////////////////////////////////////////////
@@ -100,7 +98,7 @@ class ImpressionImpl implements Impression<FeatureNames> {
     this.deviceId = args.deviceId;
     for (const [feature, args] of Object.entries(requests)) {
       const output: FeatureNames = (outputs as any)[feature];
-      (this as any)[feature] = new (featureClasses as any)[feature](
+      (this as any)[feature] = new (allFeatures as any)[feature](
         this,
         args,
         output == undefined ? {} : output
@@ -153,7 +151,7 @@ interface FeatureOutputs {
 
 type FeatureNames = "RatingBox";
 
-var featureClasses = {
+export var allFeatures = {
   RatingBox,
 };
 
@@ -164,9 +162,9 @@ type Outputs<T extends FeatureNames> = "RatingBox" extends T
 type Impression<T extends FeatureNames> = ("RatingBox" extends T
   ? { RatingBox?: RatingBox }
   : unknown) &
-  SessionArgs & { toJSON(): ImpressionJSON<T> };
+  SessionArgs & { toJSON(): ImpressionJSON<T> } & {};
 
-let _baseUrl = "http://localhost:3004/iserver";
+let _baseUrl = "http://local.test:3004/iserver";
 
 ///////////////////////////////////////////////////////////////////////////////
 // End Parameterized
@@ -449,9 +447,7 @@ export class CausalClient {
         "device id was null, undefined or the empty string. Generating random id"
       );
 
-    this.deviceId = _deviceId
-      ? _deviceId
-      : "gen_" + (Math.random() + 1).toString(36).substring(12);
+    this.deviceId = _deviceId ? _deviceId : "gen_" + generateId();
 
     if (_cache && _cacheDurationSeconds === 0)
       _onWarn("Cache set, but cacheDuration is 0. Not caching");
@@ -511,7 +507,7 @@ export class CausalClient {
             _flushCount++;
             for (const { f: feature, cb: ifCreatedBefore } of data.payload) {
               if (feature == "_all") {
-                for (const _feature of Object.keys(featureClasses)) {
+                for (const _feature of Object.keys(allFeatures)) {
                   maybeDel(_feature, ifCreatedBefore);
                 }
               } else maybeDel(feature, ifCreatedBefore);
@@ -599,12 +595,12 @@ export class CausalClient {
           JSON.stringify(error);
         _onError(errMsg);
 
-        const data = new ImpressionImpl({
+        const impression = new ImpressionImpl({
           args: sessionArgs,
           requests: builder.queries,
           outputs,
         });
-        return { impression: data, error };
+        return { impression: impression as unknown as Impression<T>, error };
       }
       const response: FeatureOutputs = (await result.json()) as FeatureOutputs;
       outputs = response;
@@ -769,4 +765,11 @@ export function useImpression<T extends FeatureNames>(
   }
 
   return { data: data as Impression<T>, loading, error };
+}
+
+export function generateId(): string {
+  return (
+    (Math.random() + 1).toString(36).substring(2) +
+    (Math.random() + 1).toString(36).substring(2)
+  );
 }

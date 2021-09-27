@@ -9,7 +9,7 @@ import {
 } from "../causal";
 import { RatingWidget } from "../components/RatingWidget";
 
-/***
+/****
  **** Please read react-example.tsx first, it provides context necessary for this example
  ***/
 
@@ -108,7 +108,7 @@ export default function Example({ json, product }: SSRProps) {
 
 const causalClient = new CausalClient({
   cacheDurationSeconds: 10,
-  deviceId: "abc123",
+  deviceId: "device-abc1324",
 });
 
 const products = {

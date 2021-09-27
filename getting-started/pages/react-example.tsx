@@ -80,7 +80,7 @@ function Example({
 // For demo purposes we are using a simple fake value.
 const causalClient = new CausalClient({
   cacheDurationSeconds: 10,
-  deviceId: "abc123",
+  deviceId: "device-abc1324",
 });
 
 export default function Page() {
