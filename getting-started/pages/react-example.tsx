@@ -4,7 +4,7 @@ import {
   CausalClient,
   CausalProvider,
   queryBuilder,
-  useCausal as useImpression,
+  useImpression as useImpression,
 } from "../causal";
 import { RatingWidget } from "../components/RatingWidget";
 
@@ -94,7 +94,7 @@ export default function Page() {
     return <></>;
   }
 
-  //  CausalProvider is how you make the useCausal react hook available. It follows
+  //  CausalProvider is how to make the useCausal react hook available. It follows
   //  The standard react Provider pattern.
   //
   //  Usually usage of CausalProvider would be done in a more global spot.

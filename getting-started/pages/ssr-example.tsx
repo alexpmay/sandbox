@@ -2,40 +2,88 @@ import { GetServerSideProps } from "next";
 import { useState } from "react";
 import {
   CausalClient,
-  ImpressionJson as ImpressionJson,
-  queryExact,
+  ImpressionJSON,
+  createQuery,
   SelectFeatures,
   toImpression,
 } from "../causal";
 import { RatingWidget } from "../components/RatingWidget";
 
-// This example displays a product and let's the user rate it
-//
-// The product to display is determined by the url query
-// The product data is (for example purposes) hard-coded in this file
-//
-// The rating prompt (ex: "Rate this product"), and the rating event are
-// defined in FDL. The industry term for such a prompt is
-// "call to action" (CTA), which is how it is referred to in this example.
-//
-// In the data warehouse, for each impression, all the data above will be
-// collected into a single row
+/***
+ **** Please read react-example.tsx first, it provides context necessary for this example
+ ***/
 
-type RatingFeatures = SelectFeatures<"RatingBox">;
+// In Next.js to pre-render a page server side you define the function getServerSideProps
+export const getServerSideProps: GetServerSideProps<SSRProps> = async (
+  context
+) => {
+  // Get the product to display.
+  const product = products[context.query.pid as keyof typeof products];
+  if (product == undefined) {
+    return {
+      redirect: { destination: "ssr-example?pid=iphone" },
+    } as unknown as SSRProps; // OK - render will never get called
+  }
 
-type SSRProps = {
-  json: ImpressionJson<RatingFeatures>;
-  product?: typeof products[keyof typeof products];
+  // Create a query using createQuery instead of queryBuilder()
+  // More on this in a moment
+  const query = createQuery<RatingFeatures>({
+    RatingBox: { product: product.name },
+  });
+
+  // request the impression with requestImpression
+  // we are not in a react render, so not using a react hook
+  // this is async code, so await the result
+  const { impression, error } = await causalClient.requestImpression(query);
+
+  if (error) {
+    console.log(
+      "There is no impression server running yet, but it still works! " +
+        "Causal is resilient to network and backend outages because the defaults are compiled in 😃."
+    );
+  }
+
+  // Next.js requires that SSR props be serializable as JSON
+  // So we have to convert the impression to JSON, and convert it back when
+  // we render. More on this ina moment
+  const props: SSRProps = { product, json: impression.toJSON() };
+  return { props };
 };
 
+// createQuery vs queryBuilder()
+//
+// When using queryBuilder(), the type of the query and the feature arguments
+// are built at the same time
+//
+// Sometime we need to define the type first, and then use it later to both
+// creaet a query and also to pass data around.
+//
+// For this use case, SelectFeatures defines the type and createQuery create
+// the query
+//
+// SelectFeatures takes in feature names as a generic parameter
+// i.e:  "Feature1" | "Feature2" | "Feature3"
+//
+// In VSCode, Use a double quote (") to trigger automplete
+type RatingFeatures = SelectFeatures<"RatingBox">;
+
+// SSRprops defines type of the props being pass from getServerSideProps to
+// the page (the type name could be anything)
+type SSRProps = {
+  product: typeof products[keyof typeof products];
+
+  // ImpressionJSON is the JSON serializable version of an impression
+  json: ImpressionJSON<RatingFeatures>;
+};
+
+// The rest of this example is almost identical to react-example.tsx
+// We just need to convert the JSON back to an impression by calling toImpression()
 export default function Example({ json, product }: SSRProps) {
   const [rating, setRating] = useState(0);
 
-  if (product == undefined) {
-    return <></>;
-  }
-
-  const impression = toImpression(json);
+  // all the typing caries through and autocomplete still works well.
+  // impression is scoped to the correct features
+  const impression = toImpression(json); // <- convert JSON to impression
 
   return (
     <div className="center">
@@ -57,58 +105,11 @@ export default function Example({ json, product }: SSRProps) {
   );
 }
 
-// CausalClient is the TypeScript interface to Causal
-//
-// Usually instantiation of CausalClient would be done in
-// a more global spot. In Next.js terms, often a Layout or in _app.tsx
-// It is here to show a self contained example
-//
-// By default Causal will cache results for 10 minutes. For demo purposes we
-// are setting it to a much lower value
-//
-// The deviceId will typcially be however you uniquely identify broswers.
-// Usually it is something you generate and store in cookie or local stroage.
-// For demo purposes we are using a simple fake value.
 const causalClient = new CausalClient({
   cacheDurationSeconds: 10,
   deviceId: "abc123",
 });
 
-export const getServerSideProps: GetServerSideProps<SSRProps> = async (
-  context
-) => {
-  // Get the product to display.
-  // This is not specifc to Causal - just necessary for the example
-  const product = products[context.query.pid as keyof typeof products];
-
-  const query = queryExact<RatingFeatures>({
-    RatingBox: { product: product.name },
-  });
-  const { data: impression, error } = await causalClient.requestImpression(
-    query
-  );
-
-  // // TODO
-  // if (error) {
-  //   console.log(
-  //     "There is no impression server running yet, but it still works! " +
-  //       "Causal is resilient to network and backend outages because the defaults are compiled in 😃."
-  //   );
-  // }
-
-  // if (!data.RatingBox) {
-  //   return (
-  //     <div>
-  //       This would only happen if RatingBox was turned off via a feature flag
-  //     </div>
-  //   );
-  // }
-
-  const props: SSRProps = { product, json: impression.toJson() };
-  return { props };
-};
-
-// The hardcoded products
 const products = {
   iphone: { name: "iPhone 13", url: "/iphone13.webp", next: "pixel" },
   pixel: { name: "Pixel 5", url: "/pixel5.webp", next: "fold" },

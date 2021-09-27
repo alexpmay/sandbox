@@ -84,26 +84,19 @@ type SessionArgs = {
 
 class ImpressionImpl implements Impression<FeatureNames> {
   readonly deviceId: string;
-  readonly constructorArgs: {
+  readonly impressionJson: {
     args: SessionArgs;
     requests: FeatureQuery;
     outputs: FeatureOutputs;
   };
 
-  toJson() {
-    return this.constructorArgs;
+  toJSON() {
+    return this.impressionJson;
   }
 
-  constructor({
-    args,
-    requests,
-    outputs,
-  }: {
-    args: SessionArgs;
-    requests: FeatureQuery;
-    outputs: FeatureOutputs;
-  }) {
-    this.constructorArgs = { args, requests, outputs };
+  constructor(impressionJson: ImpressionJSON<FeatureNames>) {
+    this.impressionJson = impressionJson;
+    const { args, requests, outputs } = impressionJson;
     this.deviceId = args.deviceId;
     for (const [feature, args] of Object.entries(requests)) {
       const output: FeatureNames = (outputs as any)[feature];
@@ -117,26 +110,30 @@ class ImpressionImpl implements Impression<FeatureNames> {
   RatingBox?: RatingBox;
 }
 
-export type QueryExact<T extends FeatureNames> =
+export type QueryArgs<T extends FeatureNames> =
   /** Wraps a rating box that we can put on various product pages
 to collect ratings from our users
      *  */
   "RatingBox" extends T ? { RatingBox: { product: string } } : unknown;
 
-export function queryExact<T extends FeatureNames>(
-  args: QueryExact<T>
-): Query<T> {
-  const queryBuilder = new Query<T>();
-  const _args = args as unknown as QueryExact<FeatureNames>; // cast needed for older versions of typescript
+export function createQuery<T extends FeatureNames>(
+  args: QueryArgs<T>
+): QueryBuilder<T> {
+  const queryBuilder = new QueryBuilder<T>();
+  const _args = args as unknown as QueryArgs<FeatureNames>; // cast needed for older versions of typescript
   if (_args.RatingBox !== undefined) queryBuilder.getRatingBox(_args.RatingBox);
   return queryBuilder;
 }
 
-export class Query<T extends FeatureNames> {
+export class QueryBuilder<T extends FeatureNames> {
   /** Wraps a rating box that we can put on various product pages
 to collect ratings from our users
      *  */
-  getRatingBox({ product }: { product: string }): Query<T | "RatingBox"> {
+  getRatingBox({
+    product,
+  }: {
+    product: string;
+  }): QueryBuilder<T | "RatingBox"> {
     this.queries["RatingBox"] = { product: product };
     return this;
   }
@@ -160,14 +157,14 @@ var featureClasses = {
   RatingBox,
 };
 
-type ToOutputs<T extends FeatureNames> = "RatingBox" extends T
+type Outputs<T extends FeatureNames> = "RatingBox" extends T
   ? { RatingBox?: FeatureOutputs["RatingBox"] }
   : unknown;
 
 type Impression<T extends FeatureNames> = ("RatingBox" extends T
   ? { RatingBox?: RatingBox }
   : unknown) &
-  SessionArgs & { toJson(): ImpressionJson<T> };
+  SessionArgs & { toJSON(): ImpressionJSON<T> };
 
 let _baseUrl = "http://localhost:3004/iserver";
 
@@ -194,8 +191,8 @@ function getEvtSourceUrl(): string | null {
 
 if (!_baseUrl.endsWith("/")) _baseUrl += "/";
 
-export function queryBuilder(): Query<never> {
-  return new Query();
+export function queryBuilder(): QueryBuilder<never> {
+  return new QueryBuilder();
 }
 
 export function defaultSendBeacon(data: unknown) {
@@ -365,11 +362,11 @@ class NoOpCache implements ValueCache {
   del() {}
 }
 
-export type ImpressionJson<T extends FeatureNames> = {
+export type ImpressionJSON<T extends FeatureNames> = {
   // data: {
   args: SessionArgs;
   requests: FeatureQuery;
-  outputs: ToOutputs<T>;
+  outputs: Outputs<T>;
   // };
   // error?: {
   //   status: number;
@@ -381,7 +378,7 @@ export function toImpression<T extends FeatureNames>({
   args,
   requests,
   outputs,
-}: ImpressionJson<T>): Impression<T> {
+}: ImpressionJSON<T>): Impression<T> {
   const impression = new ImpressionImpl({
     args,
     requests,
@@ -407,7 +404,7 @@ export type CausalClientOptions = {
   cacheDurationSeconds?: number | null;
 
   /**
-   * renderMinFetchDebounceSeconds: The minumum amount of time between duplicate fetches by useCausal()
+   * renderMinFetchDebounceSeconds: The minumum amount of time between duplicate fetches by useImpression()
    * The default value is 30
    * A value of 0 or lower means never do a duplicate fetch
    * Duplicate fetches are fetches where the input args are identical
@@ -537,14 +534,11 @@ export class CausalClient {
   }
 
   async requestImpression<T extends FeatureNames>(
-    builder: Query<T>,
+    builder: QueryBuilder<T>,
     impressionId?: string
   ): Promise<{
-    data: Impression<T>;
-    error?: {
-      status: number;
-      message: string;
-    };
+    impression: Impression<T>;
+    error?: CausalError;
   }> {
     const queries = builder.queries;
     let outputs: FeatureOutputs = {};
@@ -580,7 +574,7 @@ export class CausalClient {
         const body: {
           args: SessionArgs;
           impressionId?: string;
-          requests: Query<T>["queries"];
+          requests: QueryBuilder<T>["queries"];
         } = {
           args: sessionArgs,
           impressionId,
@@ -610,7 +604,7 @@ export class CausalClient {
           requests: builder.queries,
           outputs,
         });
-        return { data, error };
+        return { impression: data, error };
       }
       const response: FeatureOutputs = (await result.json()) as FeatureOutputs;
       outputs = response;
@@ -646,7 +640,7 @@ export class CausalClient {
         impressions,
       });
     }
-    return { data };
+    return { impression: data };
   }
 }
 
@@ -680,13 +674,15 @@ export function CausalProvider({
   );
 }
 
-export function useCausal<T extends FeatureNames>(
-  builder: Query<T>,
+export type CausalError = { status: number; message: string };
+
+export function useImpression<T extends FeatureNames>(
+  builder: QueryBuilder<T>,
   impressionId?: string
 ): {
   data: Impression<T>;
   loading: boolean;
-  error?: { status: number; message: string };
+  error?: CausalError;
 } {
   const client = useContext(causalContext);
 
@@ -708,14 +704,14 @@ export function useCausal<T extends FeatureNames>(
 
   async function fetchRequest() {
     if (!client) {
-      _onError("call to useCausal w/o seting CausalProvider");
+      _onError("call to useImpression w/o seting CausalProvider");
       return;
     }
     const result = await client.requestImpression(builder, impressionId);
     if (loading != false) {
       setLoading(false);
     }
-    setData(result.data);
+    setData(result.impression);
     if (result.error) {
       if (error != result.error) {
         setError(result.error);
@@ -763,7 +759,7 @@ export function useCausal<T extends FeatureNames>(
   );
 
   if (!client) {
-    const errorMsg = "call to useCausal w/o seting CausalProvider";
+    const errorMsg = "call to useImpression w/o seting CausalProvider";
     _onError(errorMsg);
     return {
       data: data as Impression<T>,
