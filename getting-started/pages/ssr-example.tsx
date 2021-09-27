@@ -22,7 +22,7 @@ export const getServerSideProps: GetServerSideProps<SSRProps> = async (
   if (product == undefined) {
     return {
       redirect: { destination: "ssr-example?pid=iphone" },
-    } as unknown as SSRProps; // OK - render will never get called
+    } as any; /* eslint-disable-line */ // cast OK, render will not be called
   }
 
   // Create a query using createQuery instead of queryBuilder()
@@ -32,7 +32,7 @@ export const getServerSideProps: GetServerSideProps<SSRProps> = async (
   });
 
   // request the impression with requestImpression
-  // we are not in a react render, so not using a react hook
+  // we are not in a react render, so not using the react hook (useImpression)
   // this is async code, so await the result
   const { impression, error } = await causalClient.requestImpression(query);
 
@@ -64,11 +64,11 @@ export const getServerSideProps: GetServerSideProps<SSRProps> = async (
 // SelectFeatures takes in feature names as a generic parameter
 // i.e:  "Feature1" | "Feature2" | "Feature3"
 //
-// In VSCode, Use a double quote (") to trigger automplete
+// In VSCode, Use a double quote (") to trigger automplete within this <>
 type RatingFeatures = SelectFeatures<"RatingBox">;
 
-// SSRprops defines type of the props being pass from getServerSideProps to
-// the page (the type name could be anything)
+// SSRprops defines type of the props being passed from getServerSideProps to
+// the page (the name doesnt have to be SSRProps, it could be anything)
 type SSRProps = {
   product: typeof products[keyof typeof products];
 
@@ -81,9 +81,9 @@ type SSRProps = {
 export default function Example({ json, product }: SSRProps) {
   const [rating, setRating] = useState(0);
 
-  // all the typing caries through and autocomplete still works well.
+  // All the typing caries through and autocomplete still works well.
   // impression is scoped to the correct features
-  const impression = toImpression(json); // <- convert JSON to impression
+  const impression = toImpression(json); // <- Convert JSON to impression
 
   return (
     <div className="center">
