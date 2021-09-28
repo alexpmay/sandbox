@@ -9,7 +9,7 @@
       "request": "attach",
       "port": 9222,
       "type": "pwa-chrome",
-      "url": "http://localhost:3000/*",
+      "url": "http://localhost:3005/*",
       "webRoot": "${workspaceFolder}"
     },
     {
@@ -17,21 +17,21 @@
       "request": "attach",
       "port": 9222,
       "type": "pwa-chrome",
-      "url": "http://local.test:3000/*",
+      "url": "http://local.test:3005/*",
       "webRoot": "${workspaceFolder}"
     },
     {
       "type": "pwa-chrome",
       "request": "launch",
       "name": "Launch Chrome against localhost",
-      "url": "http://localhost:3000",
+      "url": "http://localhost:3005",
       "webRoot": "${workspaceFolder}"
     },
     {
       "type": "pwa-chrome",
       "request": "launch",
       "name": "Launch Chrome against local.test",
-      "url": "http://local.test:3000",
+      "url": "http://local.test:3005",
       "webRoot": "${workspaceFolder}"
     },
     {
