@@ -24,14 +24,15 @@ repositories {
 }
 
 dependencies {
-    // This dependency is used by the application.
-    implementation 'com.google.guava:guava:29.0-jre'
+    // This is Causal's runtime library which is required to access the API
     implementation 'io.causallabs:causal-runtime:0.2-SNAPSHOT'
 }
 
+// This task will generate the API defined in the "causal.fdl" file into the 
+// build/generated directory
 task generateSource(type: Exec) {
     workingDir '.' 
-    commandLine 'causalc' , '--java' , 'build/generated' , 'causal.fdl' 
+    commandLine './causalc' , '--java' , 'build/generated' , 'causal.fdl' 
 }
 compileJava.dependsOn(generateSource)
 
