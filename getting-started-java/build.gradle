@@ -12,20 +12,14 @@ plugins {
 }
 
 repositories {
+    mavenLocal()
     // Use JCenter for resolving dependencies.
-    jcenter()
-    maven {
-      url 'https://causal-530459586293.d.codeartifact.us-east-2.amazonaws.com/maven/causal/'
-        credentials {
-            username "aws"
-            password System.env.CODEARTIFACT_AUTH_TOKEN
-        }
-    }
+    mavenCentral()
 }
 
 dependencies {
     // This is Causal's runtime library which is required to access the API
-    implementation 'io.causallabs:causal-runtime:0.2-SNAPSHOT'
+    implementation 'io.causallabs:runtime:0.2-SNAPSHOT'
 }
 
 // This task will generate the API defined in the "causal.fdl" file into the 

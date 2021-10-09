@@ -1,0 +1,16 @@
+{
+  "name": "reference-docs",
+  "version": "1.0.0",
+  "description": "project to to generate typdoc api documentation",
+  "main": "reference.tsx",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "fdlgen": "npx causalc reference.fdl --typescript reference.tsx"
+  },
+  "author": "CausalLabs",
+  "dependencies": {
+    "@causal/compiler": "^0.2.0-pre202110041037",
+    "node-fetch": "^3.0.0",
+    "typescript": "^4.4.3"
+  }
+}

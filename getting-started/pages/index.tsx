@@ -30,18 +30,21 @@ export default function index() {
           )
         </li>
         <li>
-          <a href="ssr-example?pid=iphone">React SSR Example</a> (
-          <a href="https://github.com/CausalLabs/examples/blob/main/getting-started/pages/ssr-example.tsx">
+          <a href="ssr-next-example?pid=iphone">
+            React SSR Example using Next.JS
+          </a>{" "}
+          (
+          <a href="https://github.com/CausalLabs/examples/blob/main/getting-started/pages/ssr-next-example.tsx">
             source
           </a>
           )
         </li>
         <li>
-          <a href="static-events-example?pid=iphone">
+          <a href="static-events-next-example?pid=iphone">
             Microservice / Static Events Example
           </a>
           ({" "}
-          <a href="https://github.com/CausalLabs/examples/blob/main/getting-started/pages/static-events-example.tsx">
+          <a href="https://github.com/CausalLabs/examples/blob/main/getting-started/pages/static-events-next-example.tsx">
             source
           </a>
           )

@@ -3,12 +3,38 @@
  */
 package io.causallabs.gettingstarted;
 
+import io.causallabs.generated.CausalClient;
+import io.causallabs.generated.RatingBox_Impl;
+
 public class App {
     public String getGreeting() {
         return "Hello World!";
     }
 
-    public static void main(String[] args) {
-        System.out.println(new App().getGreeting());
+    public static void main(String[] args) throws Exception {
+        // Create a client object to make requests. The client is thread safe
+        // and can be called for many different users and requests at once.
+        CausalClient cc = CausalClient.getInstance();
+
+        // construct an "Impression" object for each impression you are requesting
+        RatingBox_Impl imp = new RatingBox_Impl("iPhone");
+        // make the request
+        cc.request("javaTestDevice", imp);
+        if (imp.getError() != null) {
+            System.out.println("Got an error: " + imp.getError().getMessage());
+        }
+        // look at the results
+        System.out.println("Impression Id: " + imp.getImpressionId());
+        System.out.println("Call to action: " + imp.getCall_to_action());
+        // signal an event.
+        imp.signalRating(4);
+
+        cc.requestAsync("javaTestDevice", imp).thenAccept((x) -> {
+            System.out.println("Async reply");
+            System.out.println("Impression Id: " + imp.getImpressionId());
+            System.out.println("Call to action: " + imp.getCall_to_action());
+            imp.signalRating(4);
+        }).get();
+
     }
 }
