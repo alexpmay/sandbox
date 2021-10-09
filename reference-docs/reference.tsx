@@ -13,48 +13,46 @@ import React, {
 ///////////////////////////////////////////////////////////////////////////////
 
 
-/** Wraps a rating box that we can put on various product pages
-to collect ratings from our users
+/** An example feature for reference documentation purposes
  *   */
-interface RatingBox_outputs {
-    readonly call_to_action: string;
+interface ExampleFeature_outputs {
+    readonly example_output: string;
 
     readonly _impressionId: string;
 }
 
-/** Wraps a rating box that we can put on various product pages
-to collect ratings from our users
+/** An example feature for reference documentation purposes
  *   */
-export class RatingBox implements RatingBox_outputs {
-    /** The product that we are collecting ratings for
+export class ExampleFeature implements ExampleFeature_outputs {
+    /** An example string argument
      *  Default: null
      *   */
-    readonly product: string;
-    /** The text next to the stars that prompts the visitor to rate the product
-     *  Control: "Rate this product!"
+    readonly example_string: string;
+    /** An example string output
+     *  Control: "Example"
      *   */
-    readonly call_to_action: string;
+    readonly example_output: string;
     readonly impression: ImpressionImpl;
     readonly _impressionId: string;
 
-    /** Occurs each time a rating is collected   
+    /** Example integer event   
     *  */
-    signalrating( { stars } 
-        : {  stars : number  } ) : void
+    signalrating( { example_event } 
+        : {  example_event : number  } ) : void
     {
-      RatingBox.signalrating( this.impression.deviceId, this._impressionId, { stars: stars, } );
+      ExampleFeature.signalrating( this.impression.deviceId, this._impressionId, { example_event: example_event, } );
     }
-    /** Occurs each time a rating is collected   
+    /** Example integer event   
       *  */
-    static signalrating( deviceId : string, impressionId : string,  { stars } 
-        : {  stars : number  } ) : void
+    static signalrating( deviceId : string, impressionId : string,  { example_event } 
+        : {  example_event : number  } ) : void
     {
         const data = { 
-          feature: "RatingBox",
+          feature: "ExampleFeature",
           event: "rating",
           impressionId: impressionId,
           deviceId: deviceId,
-          args: {  stars: stars  }
+          args: {  example_event: example_event  }
         };
       _sendBeacon(data);
     }
@@ -62,15 +60,75 @@ export class RatingBox implements RatingBox_outputs {
 
    private constructor( 
        impression: ImpressionImpl, 
-       args: NonNullable<FeatureQuery["RatingBox"]>, 
-       outputs: RatingBox_outputs ) {
+       args: NonNullable<FeatureQuery["ExampleFeature"]>, 
+       outputs: ExampleFeature_outputs ) {
       this.impression = impression;
       this._impressionId = outputs._impressionId;
-      this.product = args.product;
-      if (outputs.call_to_action != undefined) {
-          this.call_to_action = outputs.call_to_action;
+      this.example_string = args.example_string;
+      if (outputs.example_output != undefined) {
+          this.example_output = outputs.example_output;
       } else {
-          this.call_to_action = "Rate this product!";
+          this.example_output = "Example";
+      }
+   }
+
+}
+/** An second example feature for reference documentation purposes
+ *   */
+interface ExampleFeature2_outputs {
+    readonly example_output: number;
+
+    readonly _impressionId: string;
+}
+
+/** An second example feature for reference documentation purposes
+ *   */
+export class ExampleFeature2 implements ExampleFeature2_outputs {
+    /** An example string argument
+     *  Default: null
+     *   */
+    readonly example_int: number;
+    /** An example int output
+     *  Control: 1
+     *   */
+    readonly example_output: number;
+    readonly impression: ImpressionImpl;
+    readonly _impressionId: string;
+
+    /** Example string event   
+    *  */
+    signalrating( { example_event } 
+        : {  example_event : string  } ) : void
+    {
+      ExampleFeature2.signalrating( this.impression.deviceId, this._impressionId, { example_event: example_event, } );
+    }
+    /** Example string event   
+      *  */
+    static signalrating( deviceId : string, impressionId : string,  { example_event } 
+        : {  example_event : string  } ) : void
+    {
+        const data = { 
+          feature: "ExampleFeature2",
+          event: "rating",
+          impressionId: impressionId,
+          deviceId: deviceId,
+          args: {  example_event: example_event  }
+        };
+      _sendBeacon(data);
+    }
+
+
+   private constructor( 
+       impression: ImpressionImpl, 
+       args: NonNullable<FeatureQuery["ExampleFeature2"]>, 
+       outputs: ExampleFeature2_outputs ) {
+      this.impression = impression;
+      this._impressionId = outputs._impressionId;
+      this.example_int = args.example_int;
+      if (outputs.example_output != undefined) {
+          this.example_output = outputs.example_output;
+      } else {
+          this.example_output = 1;
       }
    }
 
@@ -105,17 +163,22 @@ class ImpressionImpl implements Impression<FeatureNames> {
       );
     }
   }
-   RatingBox?: RatingBox 
+   ExampleFeature?: ExampleFeature 
+   ExampleFeature2?: ExampleFeature2 
 
 }
 
 export type QueryArgs<T extends FeatureNames> = 
-    /** Wraps a rating box that we can put on various product pages
-to collect ratings from our users
+    /** An example feature for reference documentation purposes
      *  */
-    & ("RatingBox" extends T ?   
-      { RatingBox : 
-          {  product : string  } } : unknown ) 
+    & ("ExampleFeature" extends T ?   
+      { ExampleFeature : 
+          {  example_string : string  } } : unknown ) 
+    /** An second example feature for reference documentation purposes
+     *  */
+    & ("ExampleFeature2" extends T ?   
+      { ExampleFeature2 : 
+          {  example_int : number  } } : unknown ) 
 
 
 export function createQuery<T extends FeatureNames>(
@@ -123,19 +186,28 @@ export function createQuery<T extends FeatureNames>(
 ): QueryBuilder<T> {
   const queryBuilder = new QueryBuilder<T>();
   const _args = args as unknown as QueryArgs<FeatureNames>; // cast needed for older versions of typescript
-  if (_args.RatingBox !== undefined)
-    queryBuilder.getRatingBox(_args.RatingBox);
+  if (_args.ExampleFeature !== undefined)
+    queryBuilder.getExampleFeature(_args.ExampleFeature);
+  if (_args.ExampleFeature2 !== undefined)
+    queryBuilder.getExampleFeature2(_args.ExampleFeature2);
   return queryBuilder;
 }
 
 export class QueryBuilder<T extends FeatureNames>{
-    /** Wraps a rating box that we can put on various product pages
-to collect ratings from our users
+    /** An example feature for reference documentation purposes
      *  */
-    getRatingBox( { product } 
-      : {  product : string  } )
-        : QueryBuilder<T | "RatingBox"> {
-        this.queries['RatingBox'] = { product: product, }
+    getExampleFeature( { example_string } 
+      : {  example_string : string  } )
+        : QueryBuilder<T | "ExampleFeature"> {
+        this.queries['ExampleFeature'] = { example_string: example_string, }
+        return this
+    }
+    /** An second example feature for reference documentation purposes
+     *  */
+    getExampleFeature2( { example_int } 
+      : {  example_int : number  } )
+        : QueryBuilder<T | "ExampleFeature2"> {
+        this.queries['ExampleFeature2'] = { example_int: example_int, }
         return this
     }
 
@@ -143,29 +215,37 @@ to collect ratings from our users
 }
 
 interface FeatureQuery {
-    RatingBox?: { 
-      product: string
+    ExampleFeature?: { 
+      example_string: string
+       },
+    ExampleFeature2?: { 
+      example_int: number
        },
 };
 
 interface FeatureOutputs {
-    RatingBox?: RatingBox_outputs;
+    ExampleFeature?: ExampleFeature_outputs;
+    ExampleFeature2?: ExampleFeature2_outputs;
 };
 
 type FeatureNames = 
-    |"RatingBox"
+    |"ExampleFeature"
+        |"ExampleFeature2"
     ;
  
 
 export var allFeatures = {
-    RatingBox,
+    ExampleFeature,
+    ExampleFeature2,
     };
 
 type Outputs<T extends FeatureNames> =
-    & ("RatingBox" extends T ? { RatingBox?:FeatureOutputs["RatingBox"] } : unknown)
+    & ("ExampleFeature" extends T ? { ExampleFeature?:FeatureOutputs["ExampleFeature"] } : unknown)
+    & ("ExampleFeature2" extends T ? { ExampleFeature2?:FeatureOutputs["ExampleFeature2"] } : unknown)
 
 type Impression<T extends FeatureNames> =
-    & ("RatingBox" extends T ? { RatingBox?:RatingBox } : unknown)
+    & ("ExampleFeature" extends T ? { ExampleFeature?:ExampleFeature } : unknown)
+    & ("ExampleFeature2" extends T ? { ExampleFeature2?:ExampleFeature2 } : unknown)
     & SessionArgs 
     & { toJSON(): ImpressionJSON<T> }
     & {

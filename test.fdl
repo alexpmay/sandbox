@@ -1,0 +1,28 @@
+## Just some sample code that we use in the developer docs
+
+feature Simple_button
+{
+    args {
+        call_to_action: String!
+    }
+    output {
+        color: String! = "blue"
+    }
+    event Click {}
+}
+
+session {
+
+    args {
+        username: String!
+    }
+
+    plugin java "ComputeCustomerData" {
+        home_zip: String
+        membership_level: String
+    }
+
+    event Add_to_cart {
+        item: ID!
+    }
+}
