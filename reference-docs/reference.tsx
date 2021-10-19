@@ -25,14 +25,20 @@ interface ExampleFeature_outputs {
  *   */
 export class ExampleFeature implements ExampleFeature_outputs {
     /** An example string argument
+     *
      *  Default: null
      *   */
     readonly example_string: string;
     /** An example string output
+     *
      *  Control: "Example"
      *   */
     readonly example_output: string;
+
+    /** @internal */
     readonly impression: ImpressionImpl;
+
+    /** @internal */
     readonly _impressionId: string;
 
     /** Example integer event   
@@ -73,7 +79,7 @@ export class ExampleFeature implements ExampleFeature_outputs {
    }
 
 }
-/** An second example feature for reference documentation purposes
+/** A second example feature for reference documentation purposes
  *   */
 interface ExampleFeature2_outputs {
     readonly example_output: number;
@@ -81,18 +87,24 @@ interface ExampleFeature2_outputs {
     readonly _impressionId: string;
 }
 
-/** An second example feature for reference documentation purposes
+/** A second example feature for reference documentation purposes
  *   */
 export class ExampleFeature2 implements ExampleFeature2_outputs {
     /** An example string argument
+     *
      *  Default: null
      *   */
     readonly example_int: number;
     /** An example int output
+     *
      *  Control: 1
      *   */
     readonly example_output: number;
+
+    /** @internal */
     readonly impression: ImpressionImpl;
+
+    /** @internal */
     readonly _impressionId: string;
 
     /** Example string event   
@@ -168,13 +180,14 @@ class ImpressionImpl implements Impression<FeatureNames> {
 
 }
 
+/** @internal */
 export type QueryArgs<T extends FeatureNames> = 
     /** An example feature for reference documentation purposes
      *  */
     & ("ExampleFeature" extends T ?   
       { ExampleFeature : 
           {  example_string : string  } } : unknown ) 
-    /** An second example feature for reference documentation purposes
+    /** A second example feature for reference documentation purposes
      *  */
     & ("ExampleFeature2" extends T ?   
       { ExampleFeature2 : 
@@ -183,30 +196,38 @@ export type QueryArgs<T extends FeatureNames> =
 
 export function createQuery<T extends FeatureNames>(
   args: QueryArgs<T>
-): QueryBuilder<T> {
-  const queryBuilder = new QueryBuilder<T>();
+): Query<T> {
+  const query = new Query<T>();
   const _args = args as unknown as QueryArgs<FeatureNames>; // cast needed for older versions of typescript
   if (_args.ExampleFeature !== undefined)
-    queryBuilder.getExampleFeature(_args.ExampleFeature);
+    query.getExampleFeature(_args.ExampleFeature);
   if (_args.ExampleFeature2 !== undefined)
-    queryBuilder.getExampleFeature2(_args.ExampleFeature2);
-  return queryBuilder;
+    query.getExampleFeature2(_args.ExampleFeature2);
+  return query;
 }
 
-export class QueryBuilder<T extends FeatureNames>{
+/** 
+* Features to query, along with their arguments
+*
+* A query is created by using either queryBuilder() or createQuery().
+*
+* A query is executed by calling either requestImpression() or useImpression().
+*
+*/
+export class Query<T extends FeatureNames>{
     /** An example feature for reference documentation purposes
      *  */
     getExampleFeature( { example_string } 
       : {  example_string : string  } )
-        : QueryBuilder<T | "ExampleFeature"> {
+        : Query<T | "ExampleFeature"> {
         this.queries['ExampleFeature'] = { example_string: example_string, }
         return this
     }
-    /** An second example feature for reference documentation purposes
+    /** A second example feature for reference documentation purposes
      *  */
     getExampleFeature2( { example_int } 
       : {  example_int : number  } )
-        : QueryBuilder<T | "ExampleFeature2"> {
+        : Query<T | "ExampleFeature2"> {
         this.queries['ExampleFeature2'] = { example_int: example_int, }
         return this
     }
@@ -253,20 +274,57 @@ type Impression<T extends FeatureNames> =
 
 let _baseUrl = "http://localhost:3004/iserver"
 
+/**
+ * Set the baseUrl for all network requests
+ *
+ * By default Causal will send all network requests to the value compiled into the generated API.
+ * This default value comes from the url associated with the impression server for each environment.
+ *
+ * The default baseUrl associated with the FDL that generated this documentation is http://localhost:3004/iserver
+ *
+ * @param baseUrl The base url to use.
+ *
+ */
+export function setBaseUrl(baseUrl: string) {
+  if (!baseUrl.endsWith("/")) baseUrl += "/";
+  _baseUrl = baseUrl;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // End Parameterized
 ///////////////////////////////////////////////////////////////////////////////
 
-export type FetchUrl = string;
+/**
+ * The method and body for a Causal fetch request.
+ *
+ * This is a subset of fetch's RequestInit that Causal uses.
+ * It is also compatible with node-fetch and other similar implementations.
+ * You can swap in any popular pollyfill for fetch and it should work
+ *
+ */
 export type FetchRequestInit = { method: "GET" | "POST"; body: string };
+
+/**
+ * The response for a Causal fetch request.
+ *
+ * This is a subset of fetch's Response that Causal uses.
+ * It is also compatible with node-fetch and other similar implementations.
+ * You can swap in any popular pollyfill for fetch and it should work
+ */
 export type FetchResponse = {
   status: number;
   text(): Promise<string>;
   json(): Promise<any>;
 };
 
-// This is just a utility type so autocomplete works better
-// type MyFeatures = SelectFeatures<"this_will_autocomplete">
+/**
+ * A utility type so autocomplete works better.
+ *
+ * Try using a quote (') or double quote (") to trigger autocomplete
+ *
+ * type MyFeatures = SelectFeatures<"this_will_autocomplete" | "so_will_this">;
+ *
+ * */
 export type SelectFeatures<T extends FeatureNames> = T;
 
 // TODO
@@ -276,10 +334,31 @@ function getEvtSourceUrl(): string | null {
 
 if (!_baseUrl.endsWith("/")) _baseUrl += "/";
 
-export function queryBuilder(): QueryBuilder<never> {
-  return new QueryBuilder();
+/**
+ * Uses the builder pattern to create a query.
+ *
+ * Chain multiple features together, passing in the args for each feature.
+ * @returns A query to be used with useImpression or requestImpression.
+ *
+ * Example: queryBuilder().getExampleFeature({example_string:"ex1"})
+ *         .getExampleFeature2({example_int:42});
+ *
+ */
+export function queryBuilder(): Query<never> {
+  return new Query();
 }
 
+/**
+ *
+ * The default function for fire and forget data
+ *
+ * By default Causal uses the browser navigator functionality to send beacons.
+ * If running server side it falls back to fetch.
+ *
+ * The function to use can be changed by setSendBeacon.
+ *
+ * @param data The data to send
+ */
 export function defaultSendBeacon(data: unknown) {
   if (typeof navigator == "undefined") {
     // we are running server side
@@ -294,12 +373,29 @@ export function defaultSendBeacon(data: unknown) {
 
 let _sendBeacon = defaultSendBeacon;
 
+/**
+ * Change the function for sending fire and forget data.
+ *
+ * By default Casual uses defaultSendBeacon.
+ *
+ * @param sendBeacon The function to use for sending fire and forget data
+ */
 export function setSendBeacon(sendBeacon: (data: unknown) => void) {
   _sendBeacon = sendBeacon;
 }
 
+/**
+ *
+ * The default function for fetch requests.
+ *
+ * By default Causal imports node-fetch to make network requests.
+ * This can altered through a compiler option or through setFetch.
+ *
+ * @param data The data to send
+ */
+
 export async function defaultFetch(
-  url: FetchUrl,
+  url: string,
   init?: FetchRequestInit
 ): Promise<FetchResponse> {
   return nodeFetch(url, init);
@@ -307,6 +403,13 @@ export async function defaultFetch(
 
 let _fetch = defaultFetch;
 
+/**
+ * Change the function for fetching data.
+ *
+ * By default Casual uses defaultFetch.
+ *
+ * @param fetch The function to use for fetching.
+ */
 export function setFetch(
   fetch: (url: string, init?: FetchRequestInit) => Promise<FetchResponse>
 ) {
@@ -314,11 +417,26 @@ export function setFetch(
 }
 
 let _onWarn = console.log;
+
+/**
+ * Change the function used to report warnings.
+ *
+ * By default, Causal will report warnings using console.warn(). This can be configured using this function.
+ *
+ * @param onWarn The function to use for reporting warnings
+ */
 export function setOnWarn(onWarn: (msg: string) => void) {
   _onWarn = onWarn;
 }
 
 let _onError = console.error;
+/**
+ * Change the function used to report errors.
+ *
+ * By default, Causal will report errors using console.errors(). This can be configured using this function.
+ *
+ * @param onError The function to use for reporting errors
+ */
 export function setOnError(onError: (msg: string) => void) {
   _onError = onError;
 }
@@ -327,13 +445,15 @@ function errorNever(_: never, message: string) {
   _onError(message);
 }
 
-export function setBaseUrl(baseUrl: string) {
-  if (!baseUrl.endsWith("/")) baseUrl += "/";
-  _baseUrl = baseUrl;
-}
-
-/** register the deviceId as a QA device for the given user. Redirect to
- * the device page when complete. Display an error message on failure.
+/**
+ *
+ * React function component to register the deviceId as a QA device for the given user.
+ *
+ * Redirect to the device page when complete. Display an error message on failure.
+ *
+ * @param userId The user id
+ * @param deviceId The device id. This should be the same device id that is passed to CausalClient
+ *
  */
 export function RegisterDevice(props: { userId: string; deviceId: string }) {
   // ssr
@@ -375,19 +495,68 @@ export function RegisterDevice(props: { userId: string; deviceId: string }) {
 
 let _flushCount = 0;
 
-// Exported so it can be mocked or swapped
+/** 
+ * @internal
+ * Caching interface for features
+ * 
+ * On the browser, the API will cache features into local storage for the duration of a session. 
+ * This is the cache interface for doing so. 
+ * Using this is unusual and not recommended
+ */
 export type ValueCache = {
+  /**
+   * Get a cached feature.
+   *
+   * @param key The feature name to lookup
+   *
+   * @returns feature information or undefined if not found. See CacheItem for more details
+   */
   get(
     key: string
   ): undefined | { identity: string; value: unknown; created: Date };
+
+  /**
+   * Set a cached feature.
+   *
+   * @param key The feature name.
+   * @param identity The query parameters for the feature request (stringified JSON)
+   * @param value The feature values to cache
+   * @param expiresTS When the value should expire
+   */
   set(key: string, identity: string, value: unknown, expiresTS: Date): void;
+
+  /**
+   * Delete a cached feature.
+   * @param key the feature name to delete the cache for
+   */
   del(key: string): void;
 };
 
+/**
+ * @internal
+ * Cached feature information
+ *
+ * On the browser, the API will cache features into local storage for the duration of a session. 
+ * This is the cache item interface for doing so. 
+ * Using this is unusual and not recommended
+ *
+ */
 export type CacheItem = {
+  /**
+   * The item creation datetime
+   */
   created: string;
+  /**
+   * The item expiry datetime
+   */
   expires: string;
+  /**
+   * The query parameters associated with the feature request (stringified JSON)
+   */
   identity: string;
+  /**
+   * The cached feature response
+   */
   value: unknown;
 };
 
@@ -403,7 +572,7 @@ class LocalStorageCache implements ValueCache {
       const now = new Date();
 
       // TODO: The server should probably send the created date over the wire
-      // As is, flushing could be innacurate due to network latency
+      // As is, flushing could be inaccurate due to network latency
       const createdTS = new Date(created);
       const expiresTS = new Date(expires);
 
@@ -447,18 +616,23 @@ class NoOpCache implements ValueCache {
   del() {}
 }
 
+/**
+ * JSON serializable version of an impression.
+ */
 export type ImpressionJSON<T extends FeatureNames> = {
-  // data: {
+  /** @internal */
   args: SessionArgs;
+  /** @internal */
   requests: FeatureQuery;
+  /** @internal */
   outputs: Outputs<T>;
-  // };
-  // error?: {
-  //   status: number;
-  //   message: string;
-  // };
 };
 
+/**
+ * Convert a JSON serializable version of an impression to a full impression.
+ * @param json The JSON serializable version of an impression
+ * @returns The impression
+ */
 export function toImpression<T extends FeatureNames>({
   args,
   requests,
@@ -472,52 +646,81 @@ export function toImpression<T extends FeatureNames>({
   return impression as unknown as Impression<T>; // cast needed for older version of typescript
 }
 
+/**
+ * Options for created CausalClient.
+ */
 export type CausalClientOptions = {
   /**
    * cache: The cache to use to cache feature values.
-   * The default is to use LocalStorage on the client and not cache on the server
-   * Set to null to explicitly disable caching
+   *
+   * On the browser, the API will cache features into local storage for the duration of a session.
+   * This setting overrides the backing cache to use. Changing this setting is very unusual and not recommended.
+   * Setting it to null will disable caching
    */
   cache?: ValueCache | null;
 
   /**
    * maxCacheSeconds: The maximum amount of time to cache feature values.
-   * The default is to cache for 600 seconds (10 minutes)
+   *
+   * This setting overrides the duration of caching. Caching will be the minimum of this value and the session duration.
    * Setting to zero will disable caching
    * Setting to a negative number will be ignored
    */
-  cacheDurationSeconds?: number | null;
+  cacheDurationSeconds?: number;
 
   /**
-   * renderMinFetchDebounceSeconds: The minumum amount of time between duplicate fetches by useImpression()
+   * renderMinFetchDebounceSeconds: The minimum amount of time between duplicate fetches by useImpression()
+   *
+   * The useImpression React hook will not refetch identical requests for this amount of time.
+   * It will not request them from the impression server, nor will it will not send updated impression information to the impression server.
+   * This is because React can call the render function many times, and not every render should be considered a new impression
+   *
+   * You can alter this debouncing behavior in two ways:
+   *   1. Change the duration of the debounce by setting this value.
+   *   2. Better yet, manually pass in impression ids. useImpression will not debounce requests with different impression ids.
+   *      The caller of useImpression is in a position to know what is actually a new impression.
+   *
+   *
    * The default value is 30
    * A value of 0 or lower means never do a duplicate fetch
    * Duplicate fetches are fetches where the input args are identical
-   *
    * CAUTION: Low values can cause render "loops" if a refetch is triggered before render completes (thus triggering another render and another refetch and...)
    *
    * The actual debounce interval is the maximum of this and cacheDurationSeconds
    *
    * For finer grained control, the best approach is to disable (set to 0) and generate your own unique impression ids whenever you want to refetch
    */
-  renderMinFetchDebounceSeconds?: number | null;
+  renderMinFetchDebounceSeconds?: number;
 
-  /** useServerSentEvents: Use server side events to update features
-   *  defaults to true for CSR, unless the valueCache is set to null. Not applicable to SSR.
+  /**
+   *  Use server side events to update features
+   *  Defaults to true for client side rendering unless the valueCache is set to null.
+   *  Not applicable to server side rendering
    *
    *  setting to false will prevent push updates to feature values, in which case features
    *  will only update when the value cache expires, or if you have set valueCache to null
    */
   useServerSentEvents?: boolean;
 
-  /** The device fron which this client is connecting */
+  /** The device from which this client is connecting */
   deviceId: string;
 };
 
+/**
+ * CausalClient class is the primary interface to Casual.
+ *
+ * To create a CausalClient pass in a CausalClientOptions object.
+ * The deviceId and any other SessionArgs are required.
+ * Several optional settings can also be configured.
+ */
 export class CausalClient {
+  /** @internal */
   readonly cache: ValueCache;
+  /** @internal */
   readonly cacheDurationSeconds: number;
+  /** @internal */
   readonly renderMinFetchDebounceSeconds: number;
+  /** @internal */
   readonly deviceId: string;
 
   constructor({
@@ -534,9 +737,7 @@ export class CausalClient {
         "device id was null, undefined or the empty string. Generating random id"
       );
 
-    this.deviceId = _deviceId
-      ? _deviceId
-      : "gen_" + generateId();
+    this.deviceId = _deviceId ? _deviceId : "gen_" + generateId();
 
     if (_cache && _cacheDurationSeconds === 0)
       _onWarn("Cache set, but cacheDuration is 0. Not caching");
@@ -619,7 +820,7 @@ export class CausalClient {
   }
 
   async requestImpression<T extends FeatureNames>(
-    builder: QueryBuilder<T>,
+    builder: Query<T>,
     impressionId?: string
   ): Promise<{
     impression: Impression<T>;
@@ -659,7 +860,7 @@ export class CausalClient {
         const body: {
           args: SessionArgs;
           impressionId?: string;
-          requests: QueryBuilder<T>["queries"];
+          requests: Query<T>["queries"];
         } = {
           args: sessionArgs,
           impressionId,
@@ -729,6 +930,14 @@ export class CausalClient {
   }
 }
 
+/**
+ * @internal
+ * Provide identity information to be used with ValueCache.
+ *
+ * @param queries The query for useImpression or requestImpression
+ * @param featureName The feature name
+ * @returns The identify information (query args associated with the query for the feature)
+ */
 export function identify(
   queries: FeatureQuery,
   featureName: FeatureNames
@@ -745,6 +954,13 @@ export function identify(
 
 const causalContext = createContext<CausalClient | null>(null);
 
+/**
+ *
+ * Makes the useImpression React hook available. It follows the standard React Context / Provider pattern.
+ *
+ * @param client The CausalClient to use
+ * @returns
+ */
 export function CausalProvider({
   client,
   children,
@@ -759,10 +975,31 @@ export function CausalProvider({
   );
 }
 
-export type CausalError = { status: number; message: string };
+/**
+ * Causal error type.
+ */
+export type CausalError = {
+  /**
+   * The numeric error status
+   */
+  status: number;
+  /**
+   * The error message
+   */
+  message: string;
+};
 
+/**
+ * The react hook to request an Impression.
+ *
+ * @param query The query specifing the features to request
+ * @param impressionId The impression id
+ * @returns data the impression data
+ * @returns loading is the request still in process
+ * @returns If any error occurred, the error, otherwise, undefined
+ */
 export function useImpression<T extends FeatureNames>(
-  builder: QueryBuilder<T>,
+  query: Query<T>,
   impressionId?: string
 ): {
   data: Impression<T>;
@@ -774,7 +1011,7 @@ export function useImpression<T extends FeatureNames>(
   const [data, setData] = useState<Impression<T>>(
     new ImpressionImpl({
       args: { deviceId: client?.deviceId ?? "error_noClientId" },
-      requests: builder.queries,
+      requests: query.queries,
       outputs: {},
     }) as unknown as Impression<T> // cast only needed for older versions of typescript
   );
@@ -792,7 +1029,7 @@ export function useImpression<T extends FeatureNames>(
       _onError("call to useImpression w/o seting CausalProvider");
       return;
     }
-    const result = await client.requestImpression(builder, impressionId);
+    const result = await client.requestImpression(query, impressionId);
     if (loading != false) {
       setLoading(false);
     }
@@ -831,7 +1068,7 @@ export function useImpression<T extends FeatureNames>(
   }
 
   const dependencyBuster = `${forceRefetchTicks}:${_flushCount}:${impressionId}:${JSON.stringify(
-    { q: builder.queries }
+    { q: query.queries }
   )}`;
 
   useEffect(
@@ -856,6 +1093,11 @@ export function useImpression<T extends FeatureNames>(
   return { data: data as Impression<T>, loading, error };
 }
 
+/**
+ * Generates a pseudo random string identifier.
+ *
+ * @returns the identifier
+ */
 export function generateId() {
   return (
     (Math.random() + 1).toString(36).substring(2) +
