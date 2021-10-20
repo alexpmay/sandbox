@@ -3,5 +3,6 @@
 .settings
 getting-started-java/bin
 getting-started-java/build
+node_modules
+.next
 test.ddl
-reference-docs/node_modules
