@@ -19,7 +19,7 @@ feature ExampleFeature {
 }
 
 """
-An second example feature for reference documentation purposes
+A second example feature for reference documentation purposes
 """
 feature ExampleFeature2 {
     args {
