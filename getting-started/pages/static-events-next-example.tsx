@@ -1,26 +1,31 @@
 import { GetServerSideProps } from "next";
 import { useState } from "react";
-import { CausalClient, generateId, queryBuilder, RatingBox } from "../causal";
+import {
+  initRequest,
+  queryBuilder,
+  RatingBox,
+  requestImpression,
+} from "../causal";
 import { RatingWidget } from "../components/RatingWidget";
+import { getOrGenDeviceId } from "../utils";
 
 type SSRProps = {
   product: typeof products[keyof typeof products];
   CTA: string;
+  deviceId: string;
   impressionId: string;
 };
 
 export const getServerSideProps: GetServerSideProps<SSRProps> = async (
   context
 ) => {
+  const deviceId = getOrGenDeviceId(context);
+  initRequest({ deviceId });
   const product = products[context.query.pid as keyof typeof products];
-
-  const impressionId = generateId();
+  const impressionId = "imp-1234";
 
   const query = queryBuilder().getRatingBox({ product: product.name });
-  const { impression, error } = await causalClient.requestImpression(
-    query,
-    impressionId
-  );
+  const { impression, error } = await requestImpression(query, impressionId);
 
   if (product == undefined || impression.RatingBox == undefined) {
     return {
@@ -36,14 +41,20 @@ export const getServerSideProps: GetServerSideProps<SSRProps> = async (
   }
 
   const props: SSRProps = {
+    deviceId,
     impressionId,
     product,
-    CTA: impression.RatingBox?.call_to_action,
+    CTA: impression.RatingBox?.callToAction,
   };
   return { props };
 };
 
-export default function Example({ product, CTA, impressionId }: SSRProps) {
+export default function ProductInfo({
+  deviceId,
+  product,
+  CTA,
+  impressionId,
+}: SSRProps) {
   const [rating, setRating] = useState(0);
 
   return (
@@ -56,12 +67,12 @@ export default function Example({ product, CTA, impressionId }: SSRProps) {
         curRating={rating}
         onSetRating={(newRating) => {
           setRating(newRating);
-          RatingBox.signalrating(deviceId, impressionId, { stars: rating });
+          RatingBox.signalRating(deviceId, impressionId, { stars: rating });
 
-          // For autocomplete convienence, you can also reference the feature
-          // classes through the allFeatures variable.
+          // For autocomplete convenience, you can also reference the feature
+          // classes through the allFeatureTypes variable.
           //
-          // allFeatures.RatingBox.signalrating(deviceId, impressionId, {
+          // allFeatureTypes.RatingBox.signalRating(deviceId, impressionId, {
           //   stars: rating,
           // });
         }}
@@ -72,12 +83,6 @@ export default function Example({ product, CTA, impressionId }: SSRProps) {
     </div>
   );
 }
-
-const deviceId = "device-abc1324";
-const causalClient = new CausalClient({
-  cacheDurationSeconds: 10,
-  deviceId,
-});
 
 const products = {
   iphone: { name: "iPhone 13", url: "/iphone13.webp", next: "pixel" },

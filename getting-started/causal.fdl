@@ -19,3 +19,26 @@ feature RatingBox {
         stars: Int! 
     }
 }
+
+"An empty feature to use only as a kill switch"
+feature ProductInfo {}
+
+"""
+Another feature just for demonstration purposes
+"""
+feature Feature2 {
+    args {
+        "Example args"
+        example_arg: String!
+    }
+    
+    output {
+        "Example output"
+        example_output: String! = "Example output"
+    }
+
+    "Example event"
+    event example_event {
+        data: String! 
+    }
+}

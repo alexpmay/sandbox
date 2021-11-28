@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "fdlgen": "npx causalc reference.fdl --typescript reference.tsx",
-    "fdlgen:local": "bash -c 'cd ../../.. && ./gradlew :parser:installDist' && ../../../parser/build/install/parser/bin/parser reference.fdl --typescript reference.tsx"
+    "fdlgen:local": "bash -c 'cd ../../.. && ./gradlew :compiler:installDist' && ../../../compiler/build/install/compiler/bin/compiler reference.fdl --typescript reference.tsx"
   },
   "author": "CausalLabs",
   "dependencies": {

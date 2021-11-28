@@ -18,4 +18,6 @@ jobs:
           wget --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
           https://raw.githubusercontent.com/GITHUB_OWNER/GITHUB_REPO/${{ github.sha }}/getting-started/causal.fdl -O /tmp/causal.fdl
       ## push the FDL file to Causal
-      - run: wget --content-on-error -O- --post-file /tmp/causal.fdl 'https://dev.causallabs.io/fdlpush?token=TOKEN&env=ENV_ID'
+      - run: |
+          wget --content-on-error -O- --post-file /tmp/causal.fdl \
+          'https://dev.causallabs.io/fdlpush?token=${{ secrets.CAUSAL_TOKEN }}&env=ENV_ID'

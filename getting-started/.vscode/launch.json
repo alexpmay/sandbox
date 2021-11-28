@@ -5,7 +5,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Attach Chrome to localhost",
+      "name": "Chrome Attach",
       "request": "attach",
       "port": 9222,
       "type": "pwa-chrome",
@@ -13,33 +13,18 @@
       "webRoot": "${workspaceFolder}"
     },
     {
-      "name": "Attach Chrome to local.test",
-      "request": "attach",
-      "port": 9222,
-      "type": "pwa-chrome",
-      "url": "http://local.test:3005/*",
-      "webRoot": "${workspaceFolder}"
-    },
-    {
+      "name": "Chrome Launch",
       "type": "pwa-chrome",
       "request": "launch",
-      "name": "Launch Chrome against localhost",
       "url": "http://localhost:3005",
       "webRoot": "${workspaceFolder}"
     },
     {
-      "type": "pwa-chrome",
-      "request": "launch",
-      "name": "Launch Chrome against local.test",
-      "url": "http://local.test:3005",
-      "webRoot": "${workspaceFolder}"
-    },
-    {
+      "name": "Node Attach",
       "type": "node",
       "request": "attach",
-      "name": "Node Attach",
       "cwd": "${workspaceFolder}",
-      "port": 9229,
+      "port": 9239,
       "skipFiles": ["<node_internals>/**"]
     }
   ]
