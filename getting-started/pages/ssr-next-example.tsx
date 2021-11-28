@@ -1,13 +1,15 @@
 import { GetServerSideProps } from "next";
 import { useState } from "react";
 import {
-  CausalClient,
   createQuery,
   ImpressionJSON,
+  initRequest,
+  requestImpression,
   SelectFeatures,
   toImpression,
 } from "../causal";
 import { RatingWidget } from "../components/RatingWidget";
+import { getOrGenDeviceId } from "../utils";
 
 type RatingFeatures = SelectFeatures<"RatingBox">;
 
@@ -19,6 +21,7 @@ type SSRProps = {
 export const getServerSideProps: GetServerSideProps<SSRProps> = async (
   context
 ) => {
+  initRequest({ deviceId: getOrGenDeviceId(context) });
   const product = products[context.query.pid as keyof typeof products];
   if (product == undefined) {
     return {
@@ -30,7 +33,7 @@ export const getServerSideProps: GetServerSideProps<SSRProps> = async (
     RatingBox: { product: product.name },
   });
 
-  const { impression, error } = await causalClient.requestImpression(query);
+  const { impression, error } = await requestImpression(query);
 
   if (error) {
     console.log(
@@ -43,7 +46,7 @@ export const getServerSideProps: GetServerSideProps<SSRProps> = async (
   return { props };
 };
 
-export default function Example({ json, product }: SSRProps) {
+export default function ProductInfo({ json, product }: SSRProps) {
   const [rating, setRating] = useState(0);
 
   const impression = toImpression(json);
@@ -53,24 +56,19 @@ export default function Example({ json, product }: SSRProps) {
       <h1>{product.name}</h1>
       <img src={product.url} alt="product image" />
 
-      <h3>{impression.RatingBox?.call_to_action}</h3>
+      <h3>{impression.RatingBox?.callToAction}</h3>
 
       <RatingWidget
         curRating={rating}
         onSetRating={(newRating) => {
           setRating(newRating);
-          impression.RatingBox?.signalrating({ stars: rating });
+          impression.RatingBox?.signalRating({ stars: rating });
         }}
       />
       <a href={"ssr-next-example?pid=" + product.next}>Rate Another</a>
     </div>
   );
 }
-
-const causalClient = new CausalClient({
-  cacheDurationSeconds: 10,
-  deviceId: "device-abc1324",
-});
 
 const products = {
   iphone: { name: "iPhone 13", url: "/iphone13.webp", next: "pixel" },

@@ -49,6 +49,13 @@ export default function index() {
           </a>
           )
         </li>
+        <li>
+          <a href="react-flags-example?pid=iphone">Feature Flag Example</a>({" "}
+          <a href="https://github.com/CausalLabs/examples/blob/main/getting-started/pages/react-flags-example.tsx">
+            source
+          </a>
+          )
+        </li>
       </ol>
     </>
   );

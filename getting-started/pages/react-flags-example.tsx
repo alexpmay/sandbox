@@ -1,13 +1,18 @@
 import { useRouter } from "next/router";
 import { useState } from "react";
-import { initRequest, queryBuilder, useImpression } from "../causal";
+import { initRequest, queryBuilder, useFlags, useImpression } from "../causal";
 import { RatingWidget } from "../components/RatingWidget";
 import { getOrGenDeviceId } from "../utils";
 
 export default function Page() {
   const router = useRouter();
   initRequest({ deviceId: getOrGenDeviceId(router) });
+  const { flags } = useFlags();
   const product = products[router.query.pid as keyof typeof products];
+
+  if (!flags?.ProductInfo) {
+    return <div>Product info has been feature flagged off</div>;
+  }
 
   if (product == undefined) {
     return <></>; // Product not found
