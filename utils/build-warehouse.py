@@ -74,7 +74,8 @@ if __name__ == "__main__":
     # ---- separator between statements
     ddl = open(args.sql_file).read().split("----")
     for stmt in ddl:
-        if (args.pretend):
+        if len(stmt)==0 or stmt.isspace(): continue
+        if args.pretend:
             print(stmt)
         else:
             run_query(stmt, args.database, output_location)

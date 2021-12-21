@@ -33,6 +33,10 @@ TMP_DIR=$(mktemp -d)
 # causal uses ---- to separate statements in the file
 csplit --elide-empty-files --prefix $TMP_DIR/causalsplit --suffix-format='%05d.sql' $CAUSAL_SQL /----/ '{*}'
 
+# remove any cruft
+sed -i -r -e '/^\s*$/d' -e '/^----$/d' $TMP_DIR/*.sql
+find $TMP_DIR -size 0 -print -delete
+
 # execute each statement
 # athena command line does not work with multiple statements, it can only process one statement at a time
 for f in $TMP_DIR/*.sql; do
