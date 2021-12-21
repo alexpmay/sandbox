@@ -997,7 +997,7 @@ let _cache: Cache = new Cache(undefined, undefined);
  *
  * Make sure to call `initRequest` in a context that will get executed on each request. If you execute it in a global context and are doing server side rendering, it will only get initialized once and it will not be able to distinguish between different sessions.
  *
- * It is safe to call `initCasual` multiple times. A good place to call `initRequest` is in a high level/root component like an App component or a always called data fetching function like getServerSideProps.
+ * It is safe to call `initRequest` multiple times. A good place to call `initRequest` is in a high level/root component like an App component or a always called data fetching function like getServerSideProps.
  *
  * @param sessionArgs The session args for this request. This includes deviceId as well as any other session args that were defined in the FDL file.
  * @param options Configurable options.
