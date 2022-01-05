@@ -816,7 +816,11 @@ export type FetchUrl = string;
  * @internal
  * Do not use - only exported for testing
  */
-export type FetchRequestInit = { method: "GET" | "POST"; body: string };
+export type FetchRequestInit = {
+  method?: "GET" | "POST";
+  body?: string;
+  signal?: AbortSignal;
+};
 
 /**
  * @internal
@@ -852,6 +856,12 @@ export type CausalOptions = {
    * in which case features will only update when the session expires
    */
   useServerSentEvents?: boolean;
+
+  /**
+   * How long to wait for the impression server to respond before a timeout
+   * The default is 1000 ms (1 second)
+   */
+  timeoutMs?: number;
 };
 
 /**
@@ -946,7 +956,7 @@ const defaultLog: {
 let log = defaultLog;
 
 const defaultSSR = typeof window == "undefined";
-let defaultMisc = {
+const defaultMisc = {
   ssr: defaultSSR,
   immediatelyRequestFlags: !defaultSSR,
 };
@@ -959,7 +969,8 @@ const defaultCacheOptions: CacheOptions = {
   sessionCacheExpirySeconds: 60 * 30,
 };
 
-let defaultNetwork = {
+const defaultNetwork = {
+  timeoutMs: 1000,
   sendBeacon: (data: unknown) => {
     if (typeof navigator == "undefined") {
       // we are running server side
@@ -1051,10 +1062,29 @@ export function initRequest(
   };
 
   network = {
+    timeoutMs: options?.timeoutMs ?? defaultNetwork.timeoutMs,
     baseUrl: options?.baseUrl
       ? normalizeUrl(options.baseUrl)
       : defaultNetwork.baseUrl,
-    fetch: debugOptions?.fetch ?? defaultNetwork.fetch,
+    fetch: (url: FetchUrl, init?: FetchRequestInit): Promise<FetchResponse> => {
+      const baseFetch = debugOptions?.fetch ?? defaultNetwork.fetch;
+
+      if (typeof AbortController == "undefined") {
+        return baseFetch(url, init);
+      } else {
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), network.timeoutMs);
+        return baseFetch(url, { ...init, signal: controller.signal })
+          .then((response) => {
+            clearTimeout(id);
+            return response;
+          })
+          .catch((response) => {
+            clearTimeout(id);
+            return response;
+          });
+      }
+    },
     sendBeacon: debugOptions?.sendBeacon ?? defaultNetwork.sendBeacon,
     newEvtSource: debugOptions?.newEvtSource ?? defaultNetwork.newEvtSource,
   };
@@ -1311,12 +1341,49 @@ async function iserverFetch({
       });
     } catch (e) {
       if ((e as Error).message) fetchExceptionError = (e as Error).message;
-      else fetchExceptionError = "unknown exception calling fetch";
+      else fetchExceptionError = "Unknown exception calling fetch. ";
     }
-    if (result === undefined || result.status != 200) {
+
+    if (result == undefined) {
+      const errMsg =
+        "Received null or undefined result. Impression server error or timeout. " +
+        fetchExceptionError;
+
+      const error = {
+        status: -1,
+        message: errMsg,
+      };
+      log.error(errMsg);
+
+      return {
+        impression: undefined,
+        flags: undefined,
+        error,
+      };
+    } else if (result.status != 200) {
+      let errMsg = "Impression server error or timeout. " + fetchExceptionError;
+      if (result.text != undefined && typeof result.text == "function") {
+        const errTxt = await result.text();
+        errMsg += errTxt;
+      }
+
       const error = {
         status: result?.status || -1,
-        message: (await result?.text()) || fetchExceptionError,
+        message: errMsg,
+      };
+      log.error(errMsg);
+
+      return {
+        impression: undefined,
+        flags: undefined,
+        error,
+      };
+    }
+    const response = (await result.json()) as IServerResponse | undefined;
+    if (response == undefined) {
+      const error = {
+        status: -1,
+        message: "unexpected null response or timeout",
       };
       const errMsg = "Impression server error: " + JSON.stringify(error);
       log.error(errMsg);
@@ -1327,7 +1394,6 @@ async function iserverFetch({
         error,
       };
     }
-    const response: IServerResponse = (await result.json()) as IServerResponse;
 
     const { _flags: responseFlags, ...wireOutputs } = response;
 
